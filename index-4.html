@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#1b1718">
+  <meta name="description" content="SAJANG COMPANY 사내 미니게임 - 30초 동안 서류에 도장을 찍고 소속 부서의 누적 실적을 높이세요.">
+  <title>부서 대항 결재 전쟁 | SAJANG COMPANY</title>
+  <style>
+    :root{color-scheme:dark;--bg:#1b1718;--panel:#262021;--panel2:#332b2c;--line:#4a4041;--ink:#f7f2eb;--muted:#c9bdb6;--red:#d7343f;--red-deep:#8f1f28;--red-soft:#ff9aa0;--paper:#f6f0e3;--paper-ink:#2a2624;--gold:#f2c660}
+    *,*::before,*::after{box-sizing:border-box}
+    html{-webkit-text-size-adjust:100%}
+    body{margin:0;min-height:100vh;font-family:Pretendard,"Noto Sans KR","Apple SD Gothic Neo",system-ui,-apple-system,sans-serif;background:radial-gradient(circle at 80% -10%,#3a2528 0%,transparent 45%),var(--bg);color:var(--ink);line-height:1.5}
+    button,input{font:inherit}
+    button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+    button:focus-visible,input:focus-visible{outline:3px solid var(--red-soft);outline-offset:3px}
+    [hidden]{display:none!important}
+    .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+    .topbar{max-width:560px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) 16px 10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px;letter-spacing:.03em}
+    .brand-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--red);color:#fff;font-weight:900;font-size:18px}
+    .chip{min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:13px;font-weight:700}
+    .chip[aria-pressed="true"]{color:var(--ink);border-color:var(--red-soft)}
+    .wrap{max-width:560px;margin:0 auto;padding:2px 16px calc(48px + env(safe-area-inset-bottom))}
+    .hud{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:8px}
+    .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0}
+    .stat-label{font-size:12px;color:var(--muted)}
+    .stat-value{display:inline-block;transform-origin:left center;font-size:clamp(23px,7vw,31px);font-weight:900;letter-spacing:-.03em;line-height:1.2;font-variant-numeric:tabular-nums}
+    .stat.score{border-color:#7a4247;background:#2f2224}
+    .stat.time.urgent{border-color:var(--red)}
+    .stat.time.urgent .stat-value{color:var(--red-soft);animation:urgent .6s infinite alternate}
+    @keyframes urgent{from{opacity:1}to{opacity:.6}}
+    .stat-value.bump{animation:bump .14s ease-out}
+    @keyframes bump{50%{transform:scale(1.14)}}
+    .timebar{height:8px;border-radius:8px;background:var(--panel2);margin:10px 0 12px;overflow:hidden}
+    .timebar i{display:block;height:100%;background:linear-gradient(90deg,var(--red),#f0777f);transform-origin:left;transition:transform .08s linear}
+    .desk{position:relative;isolation:isolate;min-height:570px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#4d4240,#2b2423 72%);padding:24px 16px;display:grid;place-items:center}
+    .desk.result-active{min-height:660px}
+    .paper-stack{position:relative;width:min(100%,380px);aspect-ratio:5/6;filter:drop-shadow(0 10px 18px #0007)}
+    .paper-stack::before,.paper-stack::after{content:"";position:absolute;inset:5px;background:#ddd5c6;border-radius:3px;transform:rotate(-2.2deg);z-index:-2}
+    .paper-stack::after{transform:rotate(1.8deg);background:#e9e2d4;z-index:-1}
+    .paper{position:relative;display:flex;flex-direction:column;width:100%;height:100%;padding:22px 22px 18px;text-align:left;border:0;border-radius:3px;color:var(--paper-ink);background:linear-gradient(160deg,#fffdf7,var(--paper));overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+    .paper:disabled{color:var(--paper-ink);cursor:default}
+    .paper:enabled{cursor:pointer}
+    .paper.impact{animation:impact .15s ease-out}
+    @keyframes impact{0%{box-shadow:inset 0 0 0 6px #d7343f2e}100%{box-shadow:inset 0 0 0 6px transparent}}
+    .paper-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:#6d655d}
+    .badge{border:1.5px solid #b8353d;color:#a8232c;padding:2px 8px;border-radius:4px;font-weight:800}
+    .paper-title{display:block;font-size:clamp(22px,6.6vw,28px);font-weight:900;letter-spacing:-.045em;line-height:1.25;margin:22px 0 6px}
+    .paper-desc{display:block;font-size:13px;color:#6d655d}
+    .detail{display:grid;grid-template-columns:72px 1fr;margin-top:18px;border-top:2px solid var(--paper-ink);font-size:14px}
+    .detail>span{padding:10px 2px;border-bottom:1px solid #d9d1c1;min-width:0}
+    .detail>span:nth-child(odd){color:#7a7168}
+    .detail>span:nth-child(even){font-weight:700}
+    .seal-area{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto}
+    .tap-note{font-size:14px;font-weight:800;color:#a8232c;line-height:1.4}
+    .seal-placeholder{display:grid;place-items:center;flex-shrink:0;width:84px;height:84px;border:2px dashed #b9ab98;border-radius:50%;color:#a99a86;font-size:13px;font-weight:700}
+    .fx-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+    .stamp-fx{position:absolute;display:flex;align-items:center;justify-content:center;width:104px;height:70px;border:5px double #bd1b28;border-radius:6px;color:#bd1b28;font-weight:900;font-size:29px;letter-spacing:.15em;text-indent:.15em;line-height:1;opacity:0;transform:translate(-50%,-50%) rotate(-16deg) scale(1.9);animation:stampHit .32s cubic-bezier(.15,.8,.3,1) forwards;mix-blend-mode:multiply}
+    @keyframes stampHit{0%{opacity:0;transform:translate(-50%,-50%) rotate(-16deg) scale(1.9)}24%{opacity:.9;transform:translate(-50%,-50%) rotate(-11deg) scale(.96)}75%{opacity:.82;transform:translate(-50%,-50%) rotate(-11deg) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(-11deg) scale(1.03)}}
+    .toast{position:absolute;z-index:8;top:16px;left:50%;transform:translateX(-50%);border-radius:20px;background:var(--red);color:#fff;padding:8px 18px;font-weight:800;font-size:15px;white-space:nowrap;pointer-events:none;box-shadow:0 6px 18px #0007;animation:toastFade .9s forwards}
+    @keyframes toastFade{0%{opacity:0;transform:translate(-50%,-8px)}18%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0}}
+    .overlay{position:absolute;inset:0;z-index:4;background:#150f10c8;backdrop-filter:blur(3px);display:grid;place-items:center;padding:14px}
+    .modal{width:min(100%,400px);max-height:100%;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px 20px 16px;box-shadow:0 20px 50px #0008;text-align:center}
+    .modal h2{font-size:26px;font-weight:900;letter-spacing:-.045em;line-height:1.25;margin:0 0 8px}
+    .modal p{font-size:14px;color:var(--muted);margin:0 0 14px}
+    .rules{list-style:none;margin:0 0 18px;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+    .rules li{background:var(--panel2);border-radius:12px;padding:9px 4px;font-size:12px;color:var(--muted)}
+    .rules b{display:block;font-size:17px;color:#fff}
+    .step{display:flex;align-items:center;gap:8px;text-align:left;font-size:14px;font-weight:800;margin:0 0 8px}
+    .step .n{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--red);font-size:12px}
+    .step .opt{font-weight:500;color:var(--muted)}
+    .dept-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 16px}
+    .dept-option{position:relative;display:flex;flex-direction:column;gap:2px;justify-content:center;min-height:64px;padding:10px 12px;border:1.5px solid var(--line);border-radius:14px;background:var(--panel2);color:var(--ink);text-align:left}
+    .dept-option strong{font-size:15px;letter-spacing:-.03em}
+    .dept-option small{font-size:12px;color:var(--muted)}
+    .dept-option[aria-pressed="true"]{background:#4a2529;border-color:var(--red)}
+    .dept-option[aria-pressed="true"]::after{content:"✓";position:absolute;top:8px;right:11px;color:var(--red-soft);font-weight:900}
+    .start-name{width:100%;min-height:48px;margin-bottom:14px;padding:0 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--panel2);color:#fff;font-size:15px}
+    .primary{width:100%;min-height:54px;border:0;border-radius:14px;background:var(--red);color:#fff;font-weight:900;font-size:17px;box-shadow:0 4px 0 var(--red-deep);transition:transform .08s,box-shadow .08s}
+    .primary:active:enabled{transform:translateY(3px);box-shadow:0 1px 0 var(--red-deep)}
+    .primary:disabled{background:#4a4243;color:#b0a49f;box-shadow:0 4px 0 #382f30;cursor:not-allowed}
+    .secondary{min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--ink);font-size:14px;font-weight:700}
+    .secondary:hover{background:#3d3334}
+    .link{min-height:44px;border:0;background:none;color:var(--muted);font-size:14px;text-decoration:underline;text-underline-offset:3px}
+    .hint{display:block;margin-top:8px;font-size:12px;color:var(--muted)}
+    .countdown-num{font-size:96px!important;line-height:1.1!important;font-weight:900;color:#fff!important;margin:6px 0!important;font-variant-numeric:tabular-nums;animation:pop .7s ease-out infinite}
+    @keyframes pop{0%{transform:scale(1.35);opacity:.4}40%{transform:scale(1);opacity:1}}
+    .result-tag{font-size:14px;font-weight:800;color:var(--muted);margin:0 0 4px}
+    .chosen-dept{font-size:15px;font-weight:800;color:var(--red-soft);margin:0 0 4px}
+    .result-number{font-size:76px;line-height:1.1;font-weight:900;letter-spacing:-.06em;font-variant-numeric:tabular-nums}
+    .result-unit{font-size:20px;color:var(--muted);font-weight:700;margin-left:4px}
+    .rank{display:inline-block;border:3px solid var(--red-soft);color:var(--red-soft);padding:5px 16px;border-radius:8px;transform:rotate(-3deg);font-size:18px;font-weight:900;margin:8px 0 12px}
+    .quote{font-size:14px;color:var(--ink);line-height:1.7;margin:0 0 12px}
+    .team-result{background:var(--panel2);border-radius:12px;padding:10px;font-size:14px;font-weight:700;margin:0 0 14px!important;color:var(--ink)!important}
+    .button-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .controls{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:48px;margin-top:10px}
+    .controls-note{font-size:13px;color:var(--muted)}
+    .below{margin-top:28px}
+    .section-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px}
+    .section-head h2{font-size:18px;letter-spacing:-.03em;margin:0}
+    .section-head span{font-size:13px;color:var(--muted)}
+    .dept-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .dept-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+    .dept-card.leader{border-color:var(--gold);background:linear-gradient(135deg,#3a2f22,var(--panel) 75%)}
+    .dept-card-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+    .dept-rank{font-size:13px;font-weight:900;color:var(--red-soft)}
+    .leader .dept-rank{color:var(--gold)}
+    .dept-count{font-size:12px;color:var(--muted)}
+    .dept-name{font-size:16px;font-weight:800;margin-top:8px;letter-spacing:-.03em}
+    .dept-points{font-size:26px;font-weight:900;letter-spacing:-.03em;margin:2px 0 10px;font-variant-numeric:tabular-nums}
+    .dept-points small{font-size:13px;font-weight:600;color:var(--muted);margin-left:3px}
+    .bar-track{height:6px;border-radius:6px;background:var(--panel2);overflow:hidden}
+    .bar-fill{height:100%;background:linear-gradient(90deg,#8f1f28,#f0777f);border-radius:6px;transition:width .3s ease}
+    .scoreboard{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+    .score-row{display:grid;grid-template-columns:44px minmax(0,1fr) 80px;align-items:center;gap:6px;padding:13px 16px;border-bottom:1px solid var(--line);font-size:14px}
+    .score-row:last-child{border-bottom:0}
+    .score-row .place{font-weight:900;color:var(--muted)}
+    .score-row:nth-child(1) .place{color:var(--gold)}
+    .score-row .who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .score-row .points{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
+    .empty{padding:24px 18px;color:var(--muted);font-size:14px;text-align:center;line-height:1.7}
+    .footer{margin-top:22px;color:var(--muted);font-size:13px;line-height:1.7}
+    @media(max-width:380px){.wrap{padding:2px 12px 40px}.topbar{padding-left:12px;padding-right:12px}.desk{padding:20px 10px}.paper{padding:18px 16px 14px}.stat{padding:9px}.modal{padding:18px 14px 14px}.modal h2{font-size:23px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+<header class="topbar"><div class="brand"><span class="brand-mark">S</span>SAJANG COMPANY</div><button class="chip" id="soundBtn" type="button" aria-pressed="false">효과음: 끔</button></header>
+<main class="wrap">
+  <h1 class="sr">부서 대항 결재 전쟁</h1>
+  <section class="hud" aria-label="게임 기록">
+    <div class="stat time" id="timeCard"><div class="stat-label">남은 시간</div><div class="stat-value" id="timeDisplay">30초</div></div>
+    <div class="stat score"><div class="stat-label">결재 완료</div><div class="stat-value" id="scoreDisplay">0건</div></div>
+    <div class="stat"><div class="stat-label">내 최고 기록</div><div class="stat-value" id="bestDisplay">0건</div></div>
+  </section>
+  <div class="timebar" aria-hidden="true"><i id="timeFill"></i></div>
+  <section class="desk" id="desk" aria-label="서류 결재 게임 화면">
+    <div class="paper-stack">
+      <button type="button" class="paper" id="paper" aria-label="서류를 눌러 승인 도장 찍기" disabled>
+        <span class="paper-top"><span id="docId">SC-2026-0001</span><span class="badge">결재 요청</span></span>
+        <span class="paper-title" id="docTitle">사내 업무 결재 요청서</span>
+        <span class="paper-desc">아래 사항을 확인하고 승인해 주세요.</span>
+        <span class="detail"><span>요청 부서</span><span id="docDept">전략기획실</span><span>요청 사항</span><span id="docSubject">정기 업무 진행 승인</span></span>
+        <span class="seal-area"><span class="tap-note">서류 어디든<br>탭해서 도장 찍기</span><span class="seal-placeholder">승인란</span></span>
+        <span class="fx-layer" id="fxLayer" aria-hidden="true"></span>
+      </button>
+    </div>
+    <div class="overlay" id="startOverlay">
+      <div class="modal">
+        <h2>부서 대항 결재 전쟁</h2>
+        <p>서류에 도장을 찍어 우리 부서 실적을 올려 주세요.</p>
+        <ul class="rules"><li><b>30초</b>제한 시간</li><li><b>탭 1번</b>승인 1건</li><li><b>자동</b>부서 점수 합산</li></ul>
+        <div class="step"><span class="n">1</span>소속 부서를 고르세요</div>
+        <div class="dept-picker" id="deptPicker" aria-label="부서 선택">
+          <button class="dept-option" type="button" data-dept="전략기획실" aria-pressed="false"><strong>전략기획실</strong><small data-total="전략기획실">누적 0건</small></button>
+          <button class="dept-option" type="button" data-dept="특수사업부" aria-pressed="false"><strong>특수사업부</strong><small data-total="특수사업부">누적 0건</small></button>
+          <button class="dept-option" type="button" data-dept="기록관리실" aria-pressed="false"><strong>기록관리실</strong><small data-total="기록관리실">누적 0건</small></button>
+          <button class="dept-option" type="button" data-dept="크리에이티브팀" aria-pressed="false"><strong>크리에이티브팀</strong><small data-total="크리에이티브팀">누적 0건</small></button>
+        </div>
+        <div class="step"><span class="n">2</span>사원 이름 <span class="opt">(선택)</span></div>
+        <input class="start-name" id="playerName" type="text" maxlength="12" placeholder="비워두면 '익명 사원'으로 기록돼요" autocomplete="nickname" aria-label="사원 이름">
+        <button class="primary" id="startBtn" type="button" disabled>부서를 골라주세요</button>
+        <span class="hint">PC에서는 스페이스바로도 도장을 찍을 수 있어요.</span>
+      </div>
+    </div>
+    <div class="overlay" id="countOverlay" hidden><div class="modal"><h2>결재 준비</h2><p class="countdown-num" id="countNum" aria-live="polite">3</p><p>곧 업무가 시작됩니다.</p></div></div>
+    <div class="overlay" id="resultOverlay" hidden>
+      <div class="modal">
+        <div class="result-tag">업무 평가 보고서</div>
+        <div class="chosen-dept" id="resultDept">전략기획실</div>
+        <div><span class="result-number" id="finalScore">0</span><span class="result-unit">건</span></div>
+        <div><span class="rank" id="rankName">수습 사원</span></div>
+        <div class="quote" id="rankQuote"></div>
+        <p class="team-result" id="teamResult">부서 누적 실적 0건</p>
+        <button type="button" class="primary" id="retryBtn">같은 부서로 다시 결재</button>
+        <div class="button-row"><button type="button" class="secondary" id="shareBtn">결과 공유</button><button type="button" class="secondary" id="imageBtn">이미지 저장</button></div>
+        <button type="button" class="link" id="changeDeptBtn">다른 부서 선택</button>
+        <span class="hint" id="saveStatus" role="status">완료된 점수는 자동 합산됩니다.</span>
+      </div>
+    </div>
+  </section>
+  <div class="controls"><div class="controls-note" id="playHint" role="status">서류 어디든 탭하면 도장이 찍혀요.</div><button class="secondary" id="exitBtn" type="button" hidden>업무 종료</button></div>
+  <section class="below" aria-label="부서 대항 누적 실적"><div class="section-head"><h2>부서별 누적 실적</h2><span id="overallTotal">총 0건 결재</span></div><div class="dept-board" id="deptBoard" aria-live="polite"></div></section>
+  <section class="below" aria-label="개인 기록 순위"><div class="section-head"><h2>개인 최고 기록 TOP 10</h2><span>30초 기준</span></div><div class="scoreboard" id="scoreboard"><div class="empty">아직 기록이 없어요.<br>첫 번째 결재왕이 되어 보세요.</div></div></section>
+  <p class="footer" id="footerNote">부서 점수와 기록은 지금 쓰는 브라우저에만 저장돼요. 다른 사원의 점수와는 합쳐지지 않습니다.</p>
+</main>
+<script>
+(()=>{
+  'use strict';
+  const $=s=>document.querySelector(s);
+  const els={paper:$('#paper'),fx:$('#fxLayer'),time:$('#timeDisplay'),score:$('#scoreDisplay'),best:$('#bestDisplay'),timeCard:$('#timeCard'),start:$('#startOverlay'),count:$('#countOverlay'),result:$('#resultOverlay'),countNum:$('#countNum'),final:$('#finalScore'),rank:$('#rankName'),quote:$('#rankQuote'),board:$('#scoreboard'),nickname:$('#playerName'),saveStatus:$('#saveStatus'),playHint:$('#playHint'),sound:$('#soundBtn'),exit:$('#exitBtn'),startBtn:$('#startBtn'),deptBoard:$('#deptBoard'),overall:$('#overallTotal'),resultDept:$('#resultDept'),teamResult:$('#teamResult'),picker:$('#deptPicker')};
+  const BEST_KEY='sajang-company-stamp-best-30s-v2';
+  const RECORDS_KEY='sajang-company-stamp-records-30s-v2';
+  const TEAMS_KEY='sajang-company-stamp-team-totals-30s-v2';
+  const DEPTS=['전략기획실','특수사업부','기록관리실','크리에이티브팀'];
+  const TITLES=['긴급 업무 결재 요청서','시설 점검 결과 보고서','사내 물품 구매 신청서','회의실 사용 승인서','휴게실 간식 발주서','출입 권한 확인 요청','회의 참석 협조 공문','복합기 교체 검토서','사무실 조명 점검서','정기 업무 수행 보고서','익명 민원 처리 요청','보안 순찰 확인 보고서'];
+  const SUBJECTS=['담당자 확인 후 즉시 처리','정기 업무 진행 승인','당일 접수 건 우선 검토','부서장 최종 결재 필요','사내 규정에 따른 승인 요청','업무 연장 관련 검토','미결재 건 신속 처리'];
+  const RANKS=[
+    {min:1000,label:'사장의 비밀 병기',quote:'“대단하시네요. 서류 더 드리겠습니다.” — 사슴'},
+    {min:600,label:'사슴의 오른팔',quote:'“능률이 기대 이상이시군요. 퇴근은…… 추후 협의하겠습니다.” — 사슴'},
+    {min:400,label:'결재의 달인',quote:'“이 정도면 나무꾼의 업무까지 부탁드려도 되겠습니다.” — 사슴'},
+    {min:250,label:'업무 우수 사원',quote:'“감사합니다. 도움이 됐습니다.” — 사슴'},
+    {min:150,label:'정규 사원',quote:'“성실하시군요. 앞으로도 부탁드리겠습니다.” — 사슴'},
+    {min:0,label:'수습 사원',quote:'“수고하셨습니다. 서류는 아직 많이 남아 있습니다.” — 사슴'}
+  ];
+  let phase='ready',score=0,best=0,selectedDept=null,gameEndTime=0,timer=null,countToken=0,docNumber=1,records=[],soundOn=false,audioCtx=null;
+  let totals=Object.fromEntries(DEPTS.map(d=>[d,{score:0,plays:0}]));
+  function storageGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function storageSet(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}}
+  function validCount(x){const n=Number(x);return Number.isSafeInteger(n)&&n>=0?n:0}
+  function loadTotals(){try{const raw=JSON.parse(storageGet(TEAMS_KEY)||'{}');for(const d of DEPTS){if(raw&&raw[d])totals[d]={score:validCount(raw[d].score),plays:validCount(raw[d].plays)}}}catch(e){}}
+  function readRecords(){try{const list=JSON.parse(storageGet(RECORDS_KEY)||'[]');return Array.isArray(list)?list.filter(r=>r&&Number.isFinite(r.score)&&typeof r.name==='string'&&DEPTS.includes(r.dept)).slice(0,250):[]}catch(e){return []}}
+  function rankFor(n){return RANKS.find(r=>n>=r.min)||RANKS[RANKS.length-1]}
+  function fmt(n){return n.toLocaleString('ko-KR')}
+  loadTotals();records=readRecords();best=Math.max(0,validCount(storageGet(BEST_KEY)),...records.map(r=>r.score));
+
+  // ▼ 구글 시트 연동: Apps Script 배포 후 나온 웹 앱 URL(…/exec)을 아래 따옴표 안에 붙여넣으세요. 비워두면 이 기기에서만 저장됩니다.
+  const API_URL='https://script.google.com/macros/s/AKfycbxf92KVzdQWGNGgE6I3sNQgiQBvcWZ_4eNfgvA8xRgc3snjJXhASo6j4S0XXmmTm73l/exec';
+  const PENDING_KEY='sajang-company-stamp-pending-v1';
+  let remoteTop=null,sending=false;
+  function readPending(){try{const l=JSON.parse(storageGet(PENDING_KEY)||'[]');return Array.isArray(l)?l.slice(0,30):[]}catch(e){return[]}}
+  async function refreshRemote(){
+    if(!API_URL)return false;
+    try{
+      const r=await fetch(API_URL+(API_URL.includes('?')?'&':'?')+'t='+Date.now());const d=await r.json();
+      if(!d||!d.totals)return false;
+      for(const k of DEPTS){const t=d.totals[k]||{};totals[k]={score:validCount(t.score),plays:validCount(t.plays)}}
+      remoteTop=Array.isArray(d.top)?d.top.filter(x=>x&&Number.isFinite(x.score)&&typeof x.name==='string'&&DEPTS.includes(x.dept)).map(x=>({name:x.name,dept:x.dept,score:x.score,date:Number(x.date)||0})).slice(0,10):[];
+      renderTeams();renderRecords();return true;
+    }catch(e){return false}
+  }
+  async function sendPending(){
+    if(!API_URL||sending)return true;
+    sending=true;const rest=[];
+    try{
+      for(const rec of readPending()){
+        try{
+          const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(rec)});
+          const d=await r.json();
+          if(!d||(d.ok===false&&d.error==='busy'))rest.push(rec);
+        }catch(e){rest.push(rec)}
+      }
+      storageSet(PENDING_KEY,JSON.stringify(rest));
+    }finally{sending=false}
+    return rest.length===0;
+  }
+  function showTeamResult(){
+    const place=[...DEPTS].sort((a,b)=>totals[b].score-totals[a].score||DEPTS.indexOf(a)-DEPTS.indexOf(b)).indexOf(selectedDept)+1;
+    els.teamResult.textContent=selectedDept+' 누적 '+fmt(totals[selectedDept].score)+'건 · 현재 '+place+'위';
+  }
+  async function submitScore(rec){
+    const list=readPending();list.push({id:rec.id,name:rec.name,dept:rec.dept,score:rec.score});storageSet(PENDING_KEY,JSON.stringify(list.slice(-30)));
+    els.saveStatus.textContent='점수를 보내는 중이에요…';
+    const sent=await sendPending();const got=sent&&await refreshRemote();
+    if(phase==='result'){
+      if(sent){els.saveStatus.textContent='점수가 전체 부서 실적에 반영됐어요.';if(got)showTeamResult()}
+      else els.saveStatus.textContent='전송에 실패했어요. 다음에 접속하면 자동으로 다시 보낼게요.';
+    }
+  }
+  function renderTeams(){
+    const list=[...DEPTS].sort((a,b)=>totals[b].score-totals[a].score||DEPTS.indexOf(a)-DEPTS.indexOf(b));
+    const max=Math.max(1,...list.map(d=>totals[d].score)),overall=DEPTS.reduce((n,d)=>n+totals[d].score,0);
+    els.overall.textContent='총 '+fmt(overall)+'건 결재';els.deptBoard.replaceChildren();
+    list.forEach((d,i)=>{
+      const card=document.createElement('div');card.className='dept-card'+(i===0&&totals[d].score>0?' leader':'');
+      const top=document.createElement('div');top.className='dept-card-top';
+      const rank=document.createElement('span');rank.className='dept-rank';rank.textContent=String(i+1).padStart(2,'0')+'위';
+      const plays=document.createElement('span');plays.className='dept-count';plays.textContent=fmt(totals[d].plays)+'회 참여';top.append(rank,plays);
+      const name=document.createElement('div');name.className='dept-name';name.textContent=d;
+      const points=document.createElement('div');points.className='dept-points';points.textContent=fmt(totals[d].score);const unit=document.createElement('small');unit.textContent='건';points.append(unit);
+      const track=document.createElement('div');track.className='bar-track';const bar=document.createElement('div');bar.className='bar-fill';bar.style.width=(100*totals[d].score/max).toFixed(1)+'%';track.append(bar);
+      card.append(top,name,points,track);els.deptBoard.append(card);
+    });
+    els.picker.querySelectorAll('[data-total]').forEach(el=>{el.textContent='누적 '+fmt(totals[el.dataset.total].score)+'건'});
+  }
+  function renderRecords(){
+    els.board.replaceChildren();const sorted=[...(API_URL&&remoteTop?remoteTop:records)].sort((a,b)=>b.score-a.score||a.date-b.date).slice(0,10);
+    if(!sorted.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='아직 기록이 없습니다. 첫 번째 결재왕이 되어보십시오.';els.board.append(empty);return}
+    sorted.forEach((r,i)=>{const line=document.createElement('div');line.className='score-row';const rank=document.createElement('span');rank.className='place';rank.textContent=String(i+1).padStart(2,'0');const name=document.createElement('span');name.className='who';name.textContent=r.name+' · '+r.dept;const points=document.createElement('span');points.className='points';points.textContent=fmt(r.score)+'건';line.append(rank,name,points);els.board.append(line)});
+  }
+  function selectDept(d){if(phase!=='ready'||!DEPTS.includes(d))return;selectedDept=d;els.picker.querySelectorAll('[data-dept]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.dept===d)));els.startBtn.disabled=false;els.startBtn.textContent=d+' 결재 시작'}
+  els.picker.addEventListener('click',e=>{const btn=e.target.closest('[data-dept]');if(btn)selectDept(btn.dataset.dept)});
+  function renderDoc(){const i=Math.max(0,docNumber-1);$('#docId').textContent='SC-2026-'+String(docNumber).padStart(4,'0');$('#docTitle').textContent=TITLES[(i*7+Math.floor(i/12))%TITLES.length];$('#docDept').textContent=selectedDept||DEPTS[(i*3+1)%DEPTS.length];$('#docSubject').textContent=SUBJECTS[(i*5+2)%SUBJECTS.length]}
+  function updateHUD(){els.score.textContent=fmt(score)+'건';els.best.textContent=fmt(best)+'건'}
+  function setPhase(next){phase=next;document.body.dataset.phase=next;if(next==='ready'||next==='countdown')document.getElementById('timeFill').style.transform='scaleX(1)';$('#desk').classList.toggle('result-active',next==='result');els.start.hidden=next!=='ready';els.count.hidden=next!=='countdown';els.result.hidden=next!=='result';els.paper.disabled=next!=='playing';els.exit.hidden=next!=='playing';els.timeCard.classList.remove('urgent')}
+  function clearTimer(){if(timer!==null){clearInterval(timer);timer=null}}
+  function fresh(keepDept){countToken++;clearTimer();score=0;docNumber=1;els.fx.replaceChildren();els.time.textContent='30초';els.playHint.textContent='서류 어디든 탭하면 도장이 찍혀요.';els.saveStatus.textContent='완료된 점수는 자동 합산됩니다.';if(!keepDept){selectedDept=null;els.picker.querySelectorAll('[data-dept]').forEach(b=>b.setAttribute('aria-pressed','false'));els.startBtn.disabled=true;els.startBtn.textContent='부서를 골라주세요'}renderDoc();updateHUD();setPhase('ready')}
+  function startCountdown(){if((phase!=='ready'&&phase!=='result')||!selectedDept)return;countToken++;const token=countToken;clearTimer();score=0;docNumber=1;renderDoc();updateHUD();els.fx.replaceChildren();els.time.textContent='30초';setPhase('countdown');let n=3;els.countNum.textContent=n;function step(){if(token!==countToken||phase!=='countdown')return;n--;if(n===0){runGame()}else{els.countNum.textContent=n;setTimeout(step,700)}}setTimeout(step,700)}
+  function runGame(){setPhase('playing');gameEndTime=performance.now()+30000;els.playHint.textContent=selectedDept+' 결재 중! 빠르게 연속으로 탭하세요.';tick();timer=setInterval(tick,55)}
+  function tick(){if(phase!=='playing')return;const left=Math.max(0,gameEndTime-performance.now());els.time.textContent=left>10000?Math.ceil(left/1000)+'초':(left/1000).toFixed(1)+'초';els.timeCard.classList.toggle('urgent',left<=10000);document.getElementById('timeFill').style.transform='scaleX('+(left/30000)+')';if(left<=0)endGame()}
+  function getName(){const raw=els.nickname.value.trim().replace(/[\u0000-\u001f\u007f]/g,'');return raw.slice(0,12)||'익명 사원'}
+  function endGame(){
+    if(phase!=='playing')return;
+    clearTimer();els.time.textContent='0.0초';if(score>best){best=score;storageSet(BEST_KEY,String(best))}updateHUD();
+    // 한 라운드가 정상 종료되는 순간 한 번만 합산됩니다. 다시하기는 새 라운드입니다.
+    totals[selectedDept].score+=score;totals[selectedDept].plays++;
+    const storedTotals=storageSet(TEAMS_KEY,JSON.stringify(totals));
+    const rec={id:String(Date.now())+'-'+Math.random().toString(36).slice(2,8),name:getName(),dept:selectedDept,score,date:Date.now()};records.push(rec);
+    records.sort((a,b)=>b.score-a.score||a.date-b.date);records=records.slice(0,250);
+    const storedRecords=storageSet(RECORDS_KEY,JSON.stringify(records));
+    const rank=rankFor(score);els.final.textContent=fmt(score);els.resultDept.textContent=selectedDept;els.rank.textContent=rank.label;els.quote.textContent=rank.quote;
+    const place=[...DEPTS].sort((a,b)=>totals[b].score-totals[a].score||DEPTS.indexOf(a)-DEPTS.indexOf(b)).indexOf(selectedDept)+1;
+    els.teamResult.textContent=selectedDept+' 누적 '+fmt(totals[selectedDept].score)+'건 · 현재 '+place+'위';
+    els.saveStatus.textContent=storedTotals&&storedRecords?'기록이 이 기기에 자동 저장되었습니다.':'저장에 실패했습니다. 이 창을 닫으면 기록이 사라질 수 있습니다.';
+    renderTeams();renderRecords();setPhase('result');els.playHint.textContent='업무 완료. 결재 실적이 부서 총점에 합산되었습니다.';if(API_URL)submitScore(rec);
+  }
+  function fxAt(x,y){const rect=els.paper.getBoundingClientRect();const mark=document.createElement('div');mark.className='stamp-fx';mark.textContent='승 인';mark.style.left=Math.min(rect.width-56,Math.max(56,x-rect.left))+'px';mark.style.top=Math.min(rect.height-42,Math.max(43,y-rect.top))+'px';els.fx.append(mark);setTimeout(()=>mark.remove(),350)}
+  function sfx(){if(!soundOn)return;try{const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;audioCtx=audioCtx||new Ctx();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});const osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),now=audioCtx.currentTime;osc.type='triangle';osc.frequency.setValueAtTime(160,now);osc.frequency.exponentialRampToValueAtTime(65,now+.07);gain.gain.setValueAtTime(.075,now);gain.gain.exponentialRampToValueAtTime(.001,now+.085);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(now);osc.stop(now+.09)}catch(e){}}
+  function milestone(n){if(n===25||n===50||n===75||n===100||n===125||n%50===0&&n>125){const desk=$('#desk');const old=desk.querySelector('.toast');if(old)old.remove();const toast=document.createElement('div');toast.className='toast';toast.textContent=n+'건 결재 완료!';desk.append(toast);setTimeout(()=>toast.remove(),950)}}
+  function stamp(x,y){if(phase!=='playing')return;if(performance.now()>=gameEndTime){endGame();return}score++;docNumber++;updateHUD();els.score.classList.remove('bump');void els.score.offsetWidth;els.score.classList.add('bump');if(navigator.vibrate)navigator.vibrate(8);fxAt(x,y);renderDoc();els.paper.classList.remove('impact');void els.paper.offsetWidth;els.paper.classList.add('impact');sfx();milestone(score)}
+  els.paper.addEventListener('pointerdown',e=>{if(phase!=='playing')return;if(e.pointerType==='mouse'&&e.button!==0)return;e.preventDefault();stamp(e.clientX,e.clientY)},{passive:false});
+  els.paper.addEventListener('keydown',e=>{if(phase!=='playing'||e.repeat)return;if(e.key===' '||e.key==='Enter'){e.preventDefault();const rect=els.paper.getBoundingClientRect();stamp(rect.left+rect.width/2,rect.top+rect.height/2)}});
+  els.paper.addEventListener('contextmenu',e=>e.preventDefault());
+  els.startBtn.addEventListener('click',startCountdown);
+  $('#retryBtn').addEventListener('click',startCountdown);
+  $('#changeDeptBtn').addEventListener('click',()=>fresh(false));
+  els.exit.addEventListener('click',()=>{if(phase==='playing'){clearTimer();fresh(true)}});
+  els.sound.addEventListener('click',()=>{soundOn=!soundOn;els.sound.textContent='효과음: '+(soundOn?'켬':'끔');els.sound.setAttribute('aria-pressed',String(soundOn));if(soundOn)sfx()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&phase==='playing')tick()});
+  function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y);ctx.closePath()}
+  function drawImage(){const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1350;const c=canvas.getContext('2d');c.fillStyle='#121212';c.fillRect(0,0,1080,1350);c.fillStyle='#bf2c38';c.fillRect(0,0,1080,13);c.strokeStyle='#333';c.lineWidth=2;for(let y=85;y<1350;y+=65){c.beginPath();c.moveTo(65,y);c.lineTo(1015,y);c.stroke()}c.fillStyle='#f2f0eb';c.font='900 36px system-ui,"Noto Sans KR",sans-serif';c.fillText('SAJANG COMPANY',80,105);c.fillStyle='#b1a5a5';c.font='600 24px system-ui';c.fillText('INTERNAL DOCUMENT SYSTEM',80,150);c.fillStyle='#edebe5';roundRect(c,65,215,950,930,15);c.fill();c.strokeStyle='#d3cfc9';c.lineWidth=4;c.strokeRect(104,254,872,850);c.fillStyle='#312d2b';c.font='bold 31px system-ui,"Noto Sans KR",sans-serif';c.textAlign='center';c.fillText('SAJANG COMPANY',540,337);c.fillStyle='#6f6964';c.font='500 25px system-ui,"Noto Sans KR",sans-serif';c.fillText('업무 평가 보고서 / APPROVAL REPORT',540,395);c.strokeStyle='#bdb8b1';c.lineWidth=2;c.beginPath();c.moveTo(165,440);c.lineTo(915,440);c.stroke();c.fillStyle='#59534e';c.font='600 32px system-ui,"Noto Sans KR",sans-serif';c.fillText('30초 결재 실적',540,510);c.fillStyle='#6f6964';c.font='700 29px system-ui,"Noto Sans KR",sans-serif';c.fillText(selectedDept||'소속 미정',540,565);c.fillStyle='#1a1716';c.font='900 175px system-ui,"Noto Sans KR",sans-serif';c.fillText(fmt(score),540,750);c.fillStyle='#77706b';c.font='600 37px system-ui,"Noto Sans KR",sans-serif';c.fillText('건 처리 완료',540,805);c.save();c.translate(540,925);c.rotate(-.07);c.strokeStyle='#ba202b';c.lineWidth=12;c.strokeRect(-325,-65,650,130);c.fillStyle='#ba202b';c.font='900 52px system-ui,"Noto Sans KR",sans-serif';c.fillText(rankFor(score).label,0,19);c.restore();c.fillStyle='#56514c';c.font='600 25px system-ui,"Noto Sans KR",sans-serif';c.fillText('사원명: '+getName(),540,1054);c.textAlign='left';c.fillStyle='#c5c5c5';c.font='500 23px system-ui,"Noto Sans KR",sans-serif';c.fillText('APPROVED BY SAJANG COMPANY',80,1220);c.textAlign='right';c.fillText(new Date().toLocaleDateString('ko-KR'),1000,1220);return canvas}
+  function resultBlob(){return new Promise((resolve,reject)=>{try{drawImage().toBlob(b=>b?resolve(b):reject(Error('이미지를 만들 수 없습니다.')),'image/png')}catch(e){reject(e)}})}
+  async function downloadImage(){if(phase!=='result')return;const btn=$('#imageBtn');btn.disabled=true;try{const blob=await resultBlob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='SAJANG_COMPANY_'+selectedDept+'_30초_'+score+'건.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);els.saveStatus.textContent='결과 이미지 저장을 요청했습니다. 다운로드 폴더를 확인하십시오.'}catch(e){els.saveStatus.textContent='이미지 저장에 실패했습니다. 다른 브라우저에서 시도해 주세요.'}finally{btn.disabled=false}}
+  async function shareResult(){if(phase!=='result')return;const btn=$('#shareBtn');btn.disabled=true;const summary=selectedDept+' · 30초 결재 실적 '+fmt(score)+'건!';try{const blob=await resultBlob();const file=new File([blob],'sajang_company_result.png',{type:'image/png'});if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'SAJANG COMPANY | 부서 대항 결재 전쟁',text:summary})}else if(navigator.share){await navigator.share({title:'SAJANG COMPANY | 부서 대항 결재 전쟁',text:summary})}else{await navigator.clipboard.writeText('SAJANG COMPANY — '+summary);els.saveStatus.textContent='공유 문구를 복사했습니다. 이미지 공유는 지원하지 않는 환경입니다.'}}catch(e){if(e.name!=='AbortError')els.saveStatus.textContent='공유가 지원되지 않거나 취소되었습니다. 결과 이미지 저장을 이용해 주세요.'}finally{btn.disabled=false}}
+  $('#imageBtn').addEventListener('click',downloadImage);
+  $('#shareBtn').addEventListener('click',shareResult);
+  renderDoc();renderTeams();renderRecords();updateHUD();
+  if(API_URL){$('#footerNote').textContent='부서 점수는 모든 사원의 기록이 합산돼요. 입력한 이름은 TOP 10에 공개됩니다.';sendPending().finally(refreshRemote);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&phase!=='playing')sendPending().finally(refreshRemote)})}
+})();
+</script>
+</body>
+</html>
