@@ -197,12 +197,12 @@
   const TITLES=['긴급 업무 결재 요청서','시설 점검 결과 보고서','사내 물품 구매 신청서','회의실 사용 승인서','휴게실 간식 발주서','출입 권한 확인 요청','회의 참석 협조 공문','복합기 교체 검토서','사무실 조명 점검서','정기 업무 수행 보고서','익명 민원 처리 요청','보안 순찰 확인 보고서'];
   const SUBJECTS=['담당자 확인 후 즉시 처리','정기 업무 진행 승인','당일 접수 건 우선 검토','부서장 최종 결재 필요','사내 규정에 따른 승인 요청','업무 연장 관련 검토','미결재 건 신속 처리'];
   const RANKS=[
-    {min:125,label:'사장의 비밀 병기',quote:'“친구. 이 정도면 제가 서류를 더 준비해야겠군요.” — 사슴'},
-    {min:100,label:'사슴의 오른팔',quote:'“능률이 기대 이상이군요. 퇴근은…… 추후 협의하지요.” — 사슴'},
-    {min:75,label:'결재의 달인',quote:'“이 정도면 나무꾼의 업무까지 맡겨도 되겠군요.” — 사슴'},
-    {min:50,label:'업무 우수 사원',quote:'“좋은 성과입니다. 다음 서류도 부탁드리지요.” — 사슴'},
-    {min:25,label:'정규 사원',quote:'“평범하지만 꾸준하군요. 바람직합니다.” — 사슴'},
-    {min:0,label:'수습 사원',quote:'“친구. 서류가 아직 많이 남아 있습니다.” — 사슴'}
+    {min:1000,label:'사장의 비밀 병기',quote:'“대단하시네요. 서류 더 드리겠습니다.” — 사슴'},
+    {min:600,label:'사슴의 오른팔',quote:'“능률이 기대 이상이시군요. 퇴근은…… 추후 협의하겠습니다.” — 사슴'},
+    {min:400,label:'결재의 달인',quote:'“이 정도면 나무꾼의 업무까지 부탁드려도 되겠습니다.” — 사슴'},
+    {min:250,label:'업무 우수 사원',quote:'“감사합니다. 도움이 됐습니다.” — 사슴'},
+    {min:150,label:'정규 사원',quote:'“성실하시군요. 앞으로도 부탁드리겠습니다.” — 사슴'},
+    {min:0,label:'수습 사원',quote:'“수고하셨습니다. 서류는 아직 많이 남아 있습니다.” — 사슴'}
   ];
   let phase='ready',score=0,best=0,selectedDept=null,gameEndTime=0,timer=null,countToken=0,docNumber=1,records=[],soundOn=false,audioCtx=null;
   let totals=Object.fromEntries(DEPTS.map(d=>[d,{score:0,plays:0}]));
@@ -310,7 +310,23 @@
   function milestone(n){if(n===25||n===50||n===75||n===100||n===125||n%50===0&&n>125){const desk=$('#desk');const old=desk.querySelector('.toast');if(old)old.remove();const toast=document.createElement('div');toast.className='toast';toast.textContent=n+'건 결재 완료!';desk.append(toast);setTimeout(()=>toast.remove(),950)}}
   function stamp(x,y){if(phase!=='playing')return;if(performance.now()>=gameEndTime){endGame();return}score++;docNumber++;updateHUD();els.score.classList.remove('bump');void els.score.offsetWidth;els.score.classList.add('bump');if(navigator.vibrate)navigator.vibrate(8);fxAt(x,y);renderDoc();els.paper.classList.remove('impact');void els.paper.offsetWidth;els.paper.classList.add('impact');sfx();milestone(score)}
   els.paper.addEventListener('pointerdown',e=>{if(phase!=='playing')return;if(e.pointerType==='mouse'&&e.button!==0)return;e.preventDefault();stamp(e.clientX,e.clientY)},{passive:false});
-  els.paper.addEventListener('keydown',e=>{if(phase!=='playing'||e.repeat)return;if(e.key===' '||e.key==='Enter'){e.preventDefault();const rect=els.paper.getBoundingClientRect();stamp(rect.left+rect.width/2,rect.top+rect.height/2)}});
+  // 게임 중에는 포커스가 어디에 있든 스페이스바로 결재합니다.
+  // 기본 스크롤을 차단하고, 키를 꾹 눌러 발생하는 자동 반복은 점수로 세지 않습니다.
+  window.addEventListener('keydown',e=>{
+    if(phase!=='playing'||(e.code!=='Space'&&e.key!==' '))return;
+    if(e.ctrlKey||e.altKey||e.metaKey)return;
+    e.preventDefault();
+    if(e.repeat)return;
+    const rect=els.paper.getBoundingClientRect();
+    stamp(rect.left+rect.width/2,rect.top+rect.height/2);
+  },{capture:true});
+  els.paper.addEventListener('keydown',e=>{
+    if(phase!=='playing'||e.key!=='Enter')return;
+    e.preventDefault();
+    if(e.repeat)return;
+    const rect=els.paper.getBoundingClientRect();
+    stamp(rect.left+rect.width/2,rect.top+rect.height/2);
+  });
   els.paper.addEventListener('contextmenu',e=>e.preventDefault());
   els.startBtn.addEventListener('click',startCountdown);
   $('#retryBtn').addEventListener('click',startCountdown);
